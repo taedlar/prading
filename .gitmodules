@@ -1,0 +1,3 @@
+[submodule "modules/mudmux"]
+	path = modules/mudmux
+	url = https://github.com/taedlar/mudmux.git

@@ -1,4 +1,5 @@
-#include "mudmux/mudmux.h"
+#include "config.h"
+#include <mudmux/mudmux.h>
 
 int main() {
     int exit_code = 0;

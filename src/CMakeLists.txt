@@ -1,4 +1,15 @@
 # src/CMakeLists.txt
 
 add_executable(prading main.cpp)
-target_link_libraries(prading PRIVATE mudmux::mudmux)
+target_include_directories(prading PRIVATE
+    ${CMAKE_BINARY_DIR} # for config.h
+)
+target_link_libraries(prading PRIVATE
+    mudmux::mudmux
+)
+
+add_custom_command(TARGET prading POST_BUILD
+    COMMAND ${CMAKE_COMMAND} -E copy -t $<TARGET_FILE_DIR:prading> $<TARGET_RUNTIME_DLLS:prading>
+    COMMAND_EXPAND_LISTS
+    COMMENT "Copying runtime dependencies for prading"
+)

@@ -1,0 +1,52 @@
+{
+    "version": 3,
+    "cmakeMinimumRequired": {
+        "major": 3,
+        "minor": 28,
+        "patch": 0
+    },
+    "configurePresets": [
+        {
+            "name": "default",
+            "hidden": true,
+            "binaryDir": "${sourceDir}/out/build/${presetName}",
+            "cacheVariables": {
+                "CMAKE_EXPORT_COMPILE_COMMANDS": "ON"
+            }
+        },
+        {
+            "name": "linux-gcc",
+            "inherits": "default",
+            "description": "Linux GCC build preset",
+            "generator": "Ninja Multi-Config",
+            "cacheVariables": {
+                "CMAKE_C_COMPILER": "gcc",
+                "CMAKE_CXX_COMPILER": "g++"
+            }
+        },
+        {
+            "name": "linux-clang",
+            "inherits": "default",
+            "description": "Linux Clang build preset",
+            "generator": "Ninja Multi-Config",
+            "cacheVariables": {
+                "CMAKE_C_COMPILER": "clang",
+                "CMAKE_CXX_COMPILER": "clang++"
+            }
+        },
+        {
+            "name": "vs16-x64",
+            "inherits": "default",
+            "description": "Visual Studio 2019 x64 build preset",
+            "generator": "Visual Studio 16 2019",
+            "architecture": "x64"
+        },
+        {
+            "name": "vs18-x64",
+            "inherits": "default",
+            "description": "Visual Studio 2026 x64 build preset",
+            "generator": "Visual Studio 18 2026",
+            "architecture": "x64"
+        }
+    ]
+}

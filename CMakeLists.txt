@@ -1,14 +1,22 @@
 # CMakeLists.txt
 cmake_minimum_required(VERSION 3.28)
 
-project(prading VERSION 1.0.0 LANGUAGES CXX)
-
-include(FetchContent)
-FetchContent_Declare(
-    mudmux
-    GIT_REPOSITORY https://github.com/taedlar/mudmux.git
-    GIT_TAG main
+project(prading
+    VERSION 1.0.0
+    DESCRIPTION "An experimental MUD system that develop and extend itself with LLM."
+    LANGUAGES CXX
 )
-FetchContent_MakeAvailable(mudmux)
 
+# dependencies
+include(FetchContent)
+
+# generate configuration header
+include(GNUInstallDirs)
+configure_file(
+    ${CMAKE_CURRENT_SOURCE_DIR}/config.h.in
+    ${CMAKE_CURRENT_BINARY_DIR}/config.h
+)
+
+# components
+add_subdirectory(modules/mudmux)
 add_subdirectory(src)
