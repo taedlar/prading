@@ -8,7 +8,7 @@ project(prading
 )
 
 # dependencies
-include(FetchContent)
+find_package(spdlog QUIET)
 
 # generate configuration header
 include(GNUInstallDirs)

@@ -5,7 +5,9 @@ target_include_directories(prading PRIVATE
     ${CMAKE_BINARY_DIR} # for config.h
 )
 target_link_libraries(prading PRIVATE
+    argparse::argparse
     mudmux::mudmux
+    spdlog::spdlog
 )
 
 add_custom_command(TARGET prading POST_BUILD
