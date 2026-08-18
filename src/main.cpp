@@ -5,6 +5,7 @@
 #include <argparse/argparse.hpp>
 #include <mudmux/mudmux.h>
 #include <mudmux/comm.h>
+#include <mudmux/hooks.h>
 
 static void process_command_line(int argc, char* argv[]);
 
