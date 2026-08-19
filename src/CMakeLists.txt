@@ -1,6 +1,8 @@
 # src/CMakeLists.txt
 
-add_executable(prading main.cpp)
+add_executable(prading main.cpp
+    main.hpp
+    connection.cpp)
 target_include_directories(prading PRIVATE
     ${CMAKE_BINARY_DIR} # for config.h
 )

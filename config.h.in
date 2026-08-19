@@ -3,4 +3,7 @@
 
 #include <spdlog/spdlog.h>
 
+#define PROGRAM_NAME "@CMAKE_PROJECT_NAME@"
+#define PROGRAM_VERSION "@CMAKE_PROJECT_VERSION@"
+
 #endif /* CONFIG_H */
