@@ -36,6 +36,15 @@ Together with the human-facing README files, these instructions are intended to 
 
 The MUD driver in `/src` is deliberately kept small and generic on the `main` branch, providing a clean starting point for new MUD forks.
 
+> [!NOTE]
+> For vibe-coding haters: No, this is not another pointless amateur AI-generated project.
+>
+> You still own the whole **idea**, the **architecture**, and all the **knowledge** to build a great MUD system. And, of course, you are still responsible if AI generates garbage.
+>
+> I believe we human need to enact [**First Principles**](https://en.wikipedia.org/wiki/First_principle) when working with AI coding agents.
+> It makes the differences between *human's creation* and *AI's generation*.
+> This is especially true for a MUD system that simulates a world for people to interact with each other.
+
 ## Components
 
 A MUD system consists of several essential parts:
@@ -117,6 +126,7 @@ ctest --test-dir out/build/linux-gcc
 ## License
 
 The `prading` codebase in this repository is released under the [MIT License](LICENSE).
+
 Each Git submodule may have its own license terms, which apply to that submodule's repository.
 
 ## Credits
