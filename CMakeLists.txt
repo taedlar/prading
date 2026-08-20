@@ -8,7 +8,16 @@ project(prading
 )
 
 # dependencies
-find_package(spdlog QUIET)
+include(FetchContent)
+FetchContent_Declare(
+    argparse
+    GIT_REPOSITORY https://github.com/p-ranav/argparse.git
+    GIT_TAG v3.2
+    FIND_PACKAGE_ARGS
+        NAMES argparse
+)
+FetchContent_MakeAvailable(argparse)
+
 
 # generate configuration header
 include(GNUInstallDirs)
@@ -18,5 +27,10 @@ configure_file(
 )
 
 # components
-add_subdirectory(modules/mudmux)
+set(MUDMUX_BUILD_EXAMPLES OFF CACHE BOOL "Disable building of mudmux examples" FORCE)
+add_subdirectory(modules/mudmux) # also fetches spdlog, yaml-cpp, OpenSSL
+find_package(spdlog REQUIRED)
+find_package(yaml-cpp REQUIRED)
+find_package(OpenSSL REQUIRED)
+
 add_subdirectory(src)
