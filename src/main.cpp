@@ -9,9 +9,29 @@
 #include <mudmux/comm.h>
 #include <mudmux/hooks.h>
 
+// logic-layer global state
+std::recursive_mutex World::world_mutex;
+std::shared_ptr<World> World::instance = nullptr; // global instance of the world state
+std::recursive_mutex Player::transports_mutex;
+std::unordered_map<int, std::shared_ptr<Player>> Player::transports; // transport (slot -> Player) mapping
+
 static void process_command_line(int argc, char* argv[]);
 
+#ifndef _WIN32
+#include <signal.h>
+static void signal_handler(int signal) {
+    SPDLOG_INFO("received signal {}, shutting down...", signal);
+    mudmux_shutdown();
+}
+#endif
+
 int main (int argc, char* argv[]) {
+#ifndef _WIN32
+    // register signal handlers for graceful shutdown
+    signal(SIGINT, signal_handler);
+    signal(SIGTERM, signal_handler);
+#endif
+
     process_command_line(argc, argv);
 
     // register transport-layer callbacks for mudmux
@@ -19,7 +39,18 @@ int main (int argc, char* argv[]) {
     mudmux_register_hook (HOOK_TRANSPORT_READY, on_transport_ready);
     mudmux_register_hook (HOOK_DISCONNECT, on_disconnect);
 
-    int exit_code = mudmux_run(nullptr);
+    {
+        std::lock_guard<std::recursive_mutex> lock(World::world_mutex);
+        World::instance = std::make_shared<World::CosmosType>();
+    }
+
+    int exit_code = mudmux_run (World::instance.get()); // run the transport layer and event loop
+
+    {
+        std::lock_guard<std::recursive_mutex> lock(World::world_mutex);
+        World::instance.reset(); // destroy the world state
+    }
+
     mudmux_deinit();
     return exit_code;
 }
