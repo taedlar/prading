@@ -81,6 +81,10 @@ Modern commercial online game systems, such as MMORPGs, commonly use a **hybrid 
 For example, *zones* or *areas* may use 3D maps whose definition files are shared by graphical clients and the server, alongside a *script-based quest system* that lets content editors create varied quests without recompiling the server.
 
 How the world simulation is divided into submodules and architectures is a design decision.
+`prading` proposes a minimum viable [**world-simulation architecture**](docs/mud-world-simulation.md) built around three C++ classes: `World`, `Zone`, and `Player`.
+
+> [!NOTE]
+> This simulation model is independent of the choice to use, or not use, an in-game programming architecture such as LPMud.
 
 ### Content Management
 
