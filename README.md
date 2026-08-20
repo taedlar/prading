@@ -26,6 +26,16 @@ cmake --preset linux-gcc
 cmake --build out/build/linux-gcc
 ```
 
+## Development
+
+Although `prading` includes C++ code and CMake build scripts, its primary development focus is the **agent instructions**.
+Search the source tree with string `# Agent Instructions for` to locate these instruction files.
+
+[`AGENTS.md`](https://agents.md/) files appear throughout the source tree and its submodules.
+Together with the human-facing README files, these instructions are intended to make the repository friendly to coding agents and help MUD developers **code in natural language**.
+
+The MUD driver in `/src` is deliberately kept small and generic on the `main` branch, providing a clean starting point for new MUD forks.
+
 ## Components
 
 A MUD system consists of several essential parts:
@@ -103,3 +113,12 @@ The project uses GoogleTest as its unit-testing framework. Use `ctest` to run th
 # Run tests for the GCC build on Linux.
 ctest --test-dir out/build/linux-gcc
 ```
+
+## License
+
+The `prading` codebase in this repository is released under the [MIT License](LICENSE).
+Each Git submodule may have its own license terms, which apply to that submodule's repository.
+
+## Credits
+
+- Project owner and initial architecture: @taedlar
