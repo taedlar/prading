@@ -13,11 +13,11 @@ FetchContent_Declare(
     argparse
     GIT_REPOSITORY https://github.com/p-ranav/argparse.git
     GIT_TAG v3.2
-    FIND_PACKAGE_ARGS
-        NAMES argparse
+    OVERRIDE_FIND_PACKAGE
 )
 FetchContent_MakeAvailable(argparse)
 
+find_package(OpenSSL REQUIRED COMPONENTS SSL Crypto)
 
 # generate configuration header
 include(GNUInstallDirs)
@@ -28,9 +28,8 @@ configure_file(
 
 # components
 set(MUDMUX_BUILD_EXAMPLES OFF CACHE BOOL "Disable building of mudmux examples" FORCE)
-add_subdirectory(modules/mudmux) # also fetches spdlog, yaml-cpp, OpenSSL
+add_subdirectory(modules/mudmux) # also fetches spdlog, yaml-cpp
 find_package(spdlog REQUIRED)
 find_package(yaml-cpp REQUIRED)
-find_package(OpenSSL REQUIRED)
 
 add_subdirectory(src)
