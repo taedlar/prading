@@ -169,7 +169,3 @@ separate repository or submodule does not lift the restriction; it continues to
 apply wherever the covered code is used. Verify the license chain of the
 specific driver and mudlib, because modern LPMud-family projects may use
 different terms.
-
-## Credits
-
-- Project owner and initial architecture: [![taedlar](https://github.com/taedlar)](https://github.com/taedlar)

@@ -4,7 +4,7 @@ cmake_minimum_required(VERSION 3.28)
 project(prading
     VERSION 1.0.0
     DESCRIPTION "An experimental MUD system that develop and extend itself with LLM."
-    LANGUAGES CXX
+    LANGUAGES C CXX
 )
 
 # dependencies
@@ -32,6 +32,7 @@ add_subdirectory(modules/mudmux) # also fetches spdlog, yaml-cpp
 find_package(spdlog REQUIRED)
 find_package(yaml-cpp REQUIRED)
 
+add_subdirectory(lib/sqlite3)
 add_subdirectory(src)
 
 # tests
