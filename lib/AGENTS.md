@@ -1,9 +1,11 @@
-# Agent Instructions for Project Libraries
+# Agent Instructions for Library Build Units
 
-`/lib` contains reusable libraries owned by the `prading` repository. Place
-logic here only when it can be used by more than one project-owned target; keep
-driver startup, transport-hook registration, and executable-specific behavior
-in `/src`.
+`/lib` contains reusable library build units integrated into `prading`. A
+library here may contain project code or third-party source, such as a vendored
+open-source package; this directory does not establish code ownership or
+licensing. Keep each third-party package's required license text, notices, and
+provenance with the package. Keep driver startup, transport-hook registration,
+and executable-specific behavior in `/src`.
 
 ## Library Design
 
