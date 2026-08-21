@@ -53,21 +53,21 @@ extensions once their contracts are known.
 ## Object model
 
 ```text
-`World::instance`: unique_ptr<CosmosType>
-                    |
-                    v
-             CosmosType -- derives from --> World
-                                            |
-                                            | zones_: name -> shared Zone
-                                            v
-                                           Zone
-                                            ^
-                                            | Player::current_zone_
-                                          Player
-                                            ^
-                                            | Player::transports: slot -> shared Player
-                                            |
-                                     mudmux connection
+World lifecycle API --> unique_ptr<CosmosType>
+                          |
+                          v
+                   CosmosType -- derives from --> World
+                                                  |
+                                                  | private zones_: name -> shared Zone
+                                                  v
+                                                 Zone
+                                                  ^
+                                                  | private current_zone_
+                                                Player
+                                                  ^
+                                                  | private transports_: slot -> shared Player
+                                                  |
+                                           mudmux connection
 ```
 
 ### `World`
@@ -78,19 +78,21 @@ common world state, including the `zones_` map from stable zone names to
 
 `World::CosmosType` identifies the concrete world type used by this driver. It
 defaults to `World`, but a project can set the alias to a class derived from
-`World`. `World::instance` is a `std::unique_ptr<CosmosType>`: the running
-server creates that sole owner before calling `mudmux_run()`. The pointer passed
-to `mudmux_run()` is a non-owning hook context, not a second owner.
+`World`. The private `std::unique_ptr<CosmosType>` is managed through
+`World::initialize()`, `World::get_instance()`, and `World::shutdown()`: the
+running server creates that sole owner before calling `mudmux_run()`. The
+pointer passed to `mudmux_run()` is a non-owning hook context, not a second
+owner. Zones are accessed through `set_zone()`, `get_zone()`, and
+`remove_zone()`.
 
 ### World lifetime contract
 
 On a normal shutdown, the driver must preserve this ordering:
 
-1. `mudmux_run(World::instance.get())` returns only after the transport event
+1. `mudmux_run(World::get_instance())` returns only after the transport event
    loop has stopped.
-2. While holding `World::world_mutex`, call `World::instance.reset()` to run
-   the concrete `CosmosType` destructor.
-3. Call `mudmux_deinit()` only after `World::instance.reset()` has completed.
+2. Call `World::shutdown()` to run the concrete `CosmosType` destructor.
+3. Call `mudmux_deinit()` only after `World::shutdown()` has completed.
 
 Using `std::unique_ptr<CosmosType>` makes this destruction point deterministic:
 no copied shared owner can keep the concrete world alive past `mudmux_deinit()`.
@@ -106,9 +108,7 @@ A specialized `CosmosType` can add zone loading, persistence, scheduling,
 global rules, or registries for other simulation objects without rewriting the
 application startup sequence.
 
-The next API additions should make zone ownership explicit, for example with
-lookup and registration operations. Zone names should be stable identifiers,
-not player-facing display names.
+Zone names should be stable identifiers, not player-facing display names.
 
 ### `Zone`
 
@@ -132,10 +132,14 @@ Initially it stores:
 - `current_zone_`, the zone containing the player; and
 - a per-player mutex for state that belongs exclusively to that player.
 
-`Player::transports` maps active transport slots to `std::shared_ptr<Player>`
-instances. `Player::LogonType` is an alias for the concrete session type used
-when a connection is created. A project may replace it with a login-session
-class, then later create or attach a separate persistent character after
+The private transport map maps active transport slots to
+`std::shared_ptr<Player>` instances and is accessed through
+`Player::connect()`, `Player::find_by_slot()`, and `Player::disconnect()`. Removal is
+conditional on the expected `Player`, so a delayed disconnect cannot erase a
+new session that reuses the same slot.
+`Player::LogonType` is an alias for the concrete session type used when a
+connection is created. A project may replace it with a login-session class,
+then later create or attach a separate persistent character after
 authentication.
 
 Keeping the session and character distinct is recommended for reconnects,
@@ -147,8 +151,9 @@ required for the first implementation.
 The transport layer is provided by `mudmux`; the simulation integrates through
 its hooks. The intended lifecycle is:
 
-1. `HOOK_CONNECT` creates a `Player::LogonType` for the slot and inserts it
-   into `Player::transports`. This hook may also select transport protocols.
+1. `HOOK_CONNECT` calls `Player::connect()` to connect a
+   `Player::LogonType` for the slot. This hook may also select transport
+   protocols.
 2. `HOOK_TRANSPORT_READY` begins the protocol-neutral login or character
    creation flow. It runs before the first inbound application message.
 3. `HOOK_MESSAGE_INBOUND` (to be registered) looks up the player by slot,
@@ -159,7 +164,7 @@ its hooks. The intended lifecycle is:
    complete login.
 5. Server shutdown disconnects live slots before `mudmux_run()` returns,
    allowing session cleanup to access the world while it still exists. The
-   driver then resets `World::instance` before calling `mudmux_deinit()`.
+   driver then calls `World::shutdown()` before calling `mudmux_deinit()`.
 
 The current source implements player creation in step 1, establishes the hook
 point for step 2, and enforces the world lifetime contract. Login, command
@@ -167,24 +172,24 @@ dispatch, persistence, and disconnect cleanup remain implementation work.
 
 ## Ownership and concurrency
 
-`World::instance` has a single owner of the concrete `CosmosType`, but the
-world it manages is shared state while the event loop is running.
-`Player::transports` is also shared state. The current classes provide
-`World::world_mutex` and `Player::transports_mutex` to guard them, and each
-player has its own `mutex_` for player-local state.
+The world instance has a single owner of the concrete `CosmosType`, but the
+world it manages is shared state while the event loop is running. The transport
+map is also shared state. Those members and their mutexes are private; callers
+use the thread-safe `World` and `Player` methods instead.
 
 `mudmux` can dispatch hooks through a worker pool, so world-simulation code
 must not assume that callbacks for different slots are serialized. The
 following locking discipline is proposed:
 
-1. Acquire `World::world_mutex` before reading or mutating world-wide state or
-   the zone map.
-2. Acquire `Player::transports_mutex` only to find, insert, or remove a
-   slot-to-player association; retain the returned `shared_ptr` before
-   releasing the map lock.
-3. Acquire a player's `mutex_` before changing its session-local state,
-   including its current zone.
-4. When an operation requires more than one lock, define and consistently use
+1. Use `World`'s lifecycle and zone methods to read or mutate world-wide
+   state. `get_instance()` is valid only during the event-loop lifetime.
+2. Use `Player::connect()`, `Player::find_by_slot()`, or
+   `Player::disconnect()` for slot-to-player associations. Retain the returned
+   `shared_ptr` after the call when a session must outlive its map entry, and
+   pass it to `Player::disconnect()` when cleanup completes.
+3. Use a player's accessors to inspect its slot, entry name, or current zone,
+   and `set_current_zone()` to change its session-local state.
+4. When an operation requires more than one state operation, define and consistently use
    one lock order before implementation. Do not hold world or player locks
    while performing blocking I/O, persistence calls, or callbacks into an
    untrusted scripting runtime.
@@ -199,8 +204,7 @@ once the API is established.
 The architecture is intended to grow through contracts rather than by placing
 all game rules in the transport callbacks:
 
-1. Add safe world and player accessors, including zone lookup and an atomic
-   player-movement operation.
+1. Add an atomic player-movement operation.
 2. Register an inbound-message hook and introduce a command-dispatch
    interface that receives a player and a command.
 3. Define a zone-content interface for rooms, exits, and visible entities.

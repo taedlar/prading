@@ -6,8 +6,15 @@
 #include <string>
 #include <unordered_map>
 
-// logic-layer base classes for the MUD server
-
+/**
+ * Zone class represents a zone in the MUD server, which can contain rooms, objects, and other game elements.
+ * It provides a base class for zone implementations and can be extended or replaced with a different
+ * implementation if needed.
+ *
+ * Zones are reference-counted using std::shared_ptr, allowing for safe sharing of zone instances across
+ * different parts of the server. A zone can be added to the World instance and retrieved by name, or referenced
+ * by players (including private zones not added to the World instance).
+ */
 class Zone: public std::enable_shared_from_this<Zone> {
 public:
     virtual ~Zone() = default;
@@ -20,34 +27,55 @@ public:
  * implementation if needed.
  */
 class World {
-protected:
-    std::unordered_map<std::string, std::shared_ptr<Zone>> zones_; // mapping of zone names to Zone objects
-
 public:
     using CosmosType = World; // type alias for the cosmos type, can be changed to a different class if needed
 
-    static std::recursive_mutex world_mutex; // mutex for thread-safe access to the world state
-    static std::unique_ptr<CosmosType> instance; // polymorphic global instance of the world state
-
     virtual ~World() = default;
 
+    static void initialize();
+    static CosmosType* get_instance();
+    static void shutdown();
+
+    void set_zone(std::string name, std::shared_ptr<Zone> zone);
+    std::shared_ptr<Zone> get_zone(const std::string& name) const;
+    bool remove_zone(const std::string& name);
+
+private:
+    static std::recursive_mutex world_mutex_; // mutex for global world state
+    static std::unique_ptr<CosmosType> instance_; // polymorphic global instance of the world state
+    std::unordered_map<std::string, std::shared_ptr<Zone>> zones_; // mapping of zone names to Zone objects
 };
 
+/**
+ * Player class represents a connected player in the MUD server, including their transport slot,
+ * entry name, and current zone. It provides thread-safe access to the player state using a
+ * recursive mutex. The Player class can be extended or replaced with a different implementation
+ * if needed.
+ */
 class Player: public std::enable_shared_from_this<Player> {
-protected:
-    std::recursive_mutex mutex_; // mutex for thread-safe access to the player state
-    int slot_; // transport slot associated with this player
-    std::string entry_name_; // entry name associated with this player
-    std::shared_ptr<Zone> current_zone_; // current zone the player is in
-
 public:
-    static std::recursive_mutex transports_mutex; // mutex for thread-safe access to the transports mapping
-    static std::unordered_map<int, std::shared_ptr<Player>> transports; // transport (slot -> Player) mapping
+    using LogonType = Player; // type alias for the logon type, can be changed to a different class if needed
 
     Player (int slot, const std::string& entry_name) : slot_(slot), entry_name_(entry_name) {}
     virtual ~Player() = default;
 
-    using LogonType = Player; // type alias for the logon type, can be changed to a different class if needed
+    int slot() const;
+    std::string entry_name() const;
+    std::shared_ptr<Zone> current_zone() const;
+    void set_current_zone(std::shared_ptr<Zone> zone);
+
+    static void connect(int slot, std::shared_ptr<Player> player);
+    static std::shared_ptr<Player> find_by_slot(int slot);
+    static bool disconnect(int slot, const std::shared_ptr<Player>& player);
+
+private:
+    mutable std::recursive_mutex mutex_; // mutex for player state
+    int slot_; // transport slot associated with this player
+    std::string entry_name_; // entry name associated with this player
+    std::shared_ptr<Zone> current_zone_; // current zone the player is in
+
+    static std::recursive_mutex transports_mutex_; // mutex for the transports mapping
+    static std::unordered_map<int, std::shared_ptr<Player>> transports_; // transport (slot -> Player) mapping
 };
 
 // transport-layer callbacks for mudmux
