@@ -172,4 +172,4 @@ different terms.
 
 ## Credits
 
-- Project owner and initial architecture: [![taedlar](https://github.com/taedlar)](https://github.com/taedlar)
+- Project owner and initial architecture: [![taedlar](https://github.com)](https://github.com/taedlar)
