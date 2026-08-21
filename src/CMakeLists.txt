@@ -3,6 +3,8 @@
 add_executable(prading main.cpp
     main.hpp
     connection.cpp
+    world.cpp
+    player.cpp
 )
 
 target_include_directories(prading PRIVATE

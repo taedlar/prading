@@ -9,12 +9,6 @@
 #include <mudmux/comm.h>
 #include <mudmux/hooks.h>
 
-// logic-layer global state
-std::recursive_mutex World::world_mutex;
-std::unique_ptr<World::CosmosType> World::instance = nullptr; // global instance of the world state
-std::recursive_mutex Player::transports_mutex;
-std::unordered_map<int, std::shared_ptr<Player>> Player::transports; // transport (slot -> Player) mapping
-
 static void process_command_line(int argc, char* argv[]);
 
 #ifndef _WIN32
@@ -39,17 +33,11 @@ int main (int argc, char* argv[]) {
     mudmux_register_hook (HOOK_TRANSPORT_READY, on_transport_ready);
     mudmux_register_hook (HOOK_DISCONNECT, on_disconnect);
 
-    {
-        std::lock_guard<std::recursive_mutex> lock(World::world_mutex);
-        World::instance = std::make_unique<World::CosmosType>();
-    }
+    World::initialize();
 
-    int exit_code = mudmux_run (World::instance.get()); // run the transport layer and event loop
+    int exit_code = mudmux_run (World::get_instance()); // run the transport layer and event loop
 
-    {
-        std::lock_guard<std::recursive_mutex> lock(World::world_mutex);
-        World::instance.reset(); // destroy the world state
-    }
+    World::shutdown(); // destroy the world state
 
     mudmux_deinit();
     return exit_code;
