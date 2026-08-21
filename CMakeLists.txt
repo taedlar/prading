@@ -1,11 +1,14 @@
 # CMakeLists.txt
 cmake_minimum_required(VERSION 3.28)
 
+# project settings
 project(prading
     VERSION 1.0.0
     DESCRIPTION "An experimental MUD system that develop and extend itself with LLM."
     LANGUAGES C CXX
 )
+option(BUILD_TESTING "Enable testing" ON)
+option(BUILD_EXAMPLES "Enable building of examples" ON)
 
 # dependencies
 include(FetchContent)
@@ -40,4 +43,8 @@ include(CTest)
 if(BUILD_TESTING)
     enable_testing()
     find_package(GTest REQUIRED)
+endif()
+
+# examples
+if(BUILD_EXAMPLES)
 endif()

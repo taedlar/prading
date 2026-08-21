@@ -7,6 +7,7 @@
 - `/lib`: library build units integrated into this repository
 - `/docs`: project documentation
 - `/tests`: unit tests for project-owned code
+- `/examples`: example code for both human developer and coding agent
 
 `/modules` contains independent repositories. Each submodule can have its own
 build, tests, licensing, and `AGENTS.md` instructions. `/src`, `/lib`,
