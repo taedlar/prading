@@ -6,12 +6,15 @@ To start a new MUD project with `prading`, fork this repository.
 
 ## Bootstrap
 
-The project uses Git submodules to organize its components. Fetch them after checking out the source tree:
+This repository includes Git submodules for independently maintained, reusable
+libraries. Fetch them after checking out the source tree:
 ```
 git submodule update --init
 ```
 
-If you fork this repository for a new MUD project, add modules under `/modules`.
+When you fork this repository for a new MUD project, decide for each component
+whether it belongs in the fork as a library or should be an independently
+maintained module under `/modules`.
 
 ## Building
 
@@ -52,24 +55,37 @@ A MUD system consists of several essential parts:
 - **Logic layer** — Routes inbound data to command handlers and delivers outbound messages to connected users. It also defines or simulates the virtual world in which users interact. This layer has evolved through many architectures and design philosophies, including AberMUD, TinyMUD, LPMud, DikuMUD, MUSH, and MOO.
 - **Content layer** — Contains the player-facing parts of the MUD. It can support many styles and themes: hack-and-slash MUDs present text-based worlds where players fight monsters or one another; role-playing MUDs encourage players to inhabit their characters; and social MUDs focus primarily on social interaction.
 
-This three-layer component model abstracts a MUD system from a software developer's perspective.
-`prading` aims to provide a generic foundation that MUD developers can use to assemble reusable submodules into a rapid-development codebase.
+This three-layer model describes a MUD system from a software developer's
+perspective. Here, a **component** is a functional part of the MUD—such as a
+transport implementation, a world simulation, or account persistence. It is
+an architectural term, not a repository layout or packaging requirement.
+
+A component may be implemented as a project-owned library in the fork, or as
+an independently maintained Git submodule when it has a useful, documented API
+and is intended for reuse by other MUD projects. A component may also be made
+up of more than one library or module. `prading` provides a generic foundation
+for composing either kind into a rapid-development codebase.
 By having coding agents handle the lower layers (that is, transport and logic), MUD developers can focus on content, which benefits more from human creativity than coding skill.
 
 ## Hook Functions
 
-Components are usually implemented as submodules in the `prading` source tree.
-These submodules are typically assembled with hook functions: C functions that implement contracts defined by their components.
+Components can be implemented as project-owned libraries or as submodules in
+`/modules`. Their implementations are typically assembled with hook functions:
+C functions that implement the components' integration contracts.
 
 For example, when the system receives a user command, a transport-layer component processes it and logic-layer components route it to a command handler. The handler generates messages from content-layer descriptions, then sends them to users in the same room, as defined by the logic layer, through the transport-layer API.
 
 A MUD with *in-game programming* capabilities, such as LPMud, may wire transport-layer hooks to interpreter-based callbacks. Other MUD genres, such as DikuMUD, may implement command routing with C command tables.
 
-The logic layer determines how hook functions connect submodules.
+The logic layer determines how hook functions connect component implementations.
 
 ## Submodules
 
-As a generic MUD foundation, `prading` divides a MUD system into reusable submodules and encourages alternative implementations.
+Use a Git submodule for a component implementation only when it is intended to
+be independently maintained and reused. Submodules have their own repository,
+version, and public integration contract; project-specific libraries live in
+the fork and do not need those boundaries. Both are valid implementations of
+the same three-layer architecture.
 
 When adding a submodule, use `modules/mudmux` as an example and:
 - Expose APIs with public C headers.
@@ -99,7 +115,9 @@ The *driver*, written in C, loads these files to render virtual-world content th
 Modern commercial online game systems, such as MMORPGs, commonly use a **hybrid design**.
 For example, *zones* or *areas* may use 3D maps whose definition files are shared by graphical clients and the server, alongside a *script-based quest system* that lets content editors create varied quests without recompiling the server.
 
-How the world simulation is divided into submodules and architectures is a design decision.
+How the world simulation is divided into component implementations and
+architectures is a design decision. It may be a library in one MUD fork and a
+reusable submodule in another.
 `prading` proposes a minimum viable [**world-simulation architecture**](docs/mud-world-simulation.md) built around three C++ classes: `World`, `Zone`, and `Player`.
 
 > [!NOTE]
@@ -125,10 +143,33 @@ ctest --test-dir out/build/linux-gcc
 
 ## License
 
-The `prading` codebase in this repository is released under the [MIT License](LICENSE).
+The `prading` codebase and documents in this repository is released under the [MIT License](LICENSE).
+
+### Notes about using Git submodules
 
 Each Git submodule may have its own license terms, which apply to that submodule's repository.
 
+A component with license requirements that differ from the MUD project—for
+example, a GPL-licensed implementation—may be kept in a submodule so that its
+source, notices, and distribution terms can be managed in its own repository.
+That repository boundary does not by itself avoid license obligations: how the
+component is linked, distributed, and exposed to users still matters. GPL
+source-sharing obligations are normally triggered by conveying a program,
+whereas the AGPL also addresses network use. Choose a license and integration
+boundary with appropriate legal advice when a proprietary game server,
+confidential content, or spoiler protection is a concern.
+
+### Notes about using historical MUD codebase
+
+Historical LPMud code, and some drivers derived from it, carry an additional
+non-commercial restriction: the source may not be used for monetary gain. This
+restriction can limit adoption and collaboration in the open-source community,
+and it may make a LPMud-genre project unsuitable for commercial operation. A
+separate repository or submodule does not lift the restriction; it continues to
+apply wherever the covered code is used. Verify the license chain of the
+specific driver and mudlib, because modern LPMud-family projects may use
+different terms.
+
 ## Credits
 
-- Project owner and initial architecture: @taedlar
+- Project owner and initial architecture: [![taedlar](https://github.com/taedlar)](https://github.com/taedlar)
