@@ -13,17 +13,24 @@ public:
     virtual ~Zone() = default;
 };
 
-class World: public std::enable_shared_from_this<World> {
+/**
+ * World class represents the global state of the MUD server, including zones
+ * and other game-related data. It provides thread-safe access to the world state
+ * using a recursive mutex. The World class can be extended or replaced with a different
+ * implementation if needed.
+ */
+class World {
 protected:
     std::unordered_map<std::string, std::shared_ptr<Zone>> zones_; // mapping of zone names to Zone objects
 
 public:
+    using CosmosType = World; // type alias for the cosmos type, can be changed to a different class if needed
+
     static std::recursive_mutex world_mutex; // mutex for thread-safe access to the world state
-    static std::shared_ptr<World> instance;
+    static std::unique_ptr<CosmosType> instance; // polymorphic global instance of the world state
 
     virtual ~World() = default;
 
-    using CosmosType = World; // type alias for the cosmos type, can be changed to a different class if needed
 };
 
 class Player: public std::enable_shared_from_this<Player> {

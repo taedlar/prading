@@ -11,7 +11,7 @@
 
 // logic-layer global state
 std::recursive_mutex World::world_mutex;
-std::shared_ptr<World> World::instance = nullptr; // global instance of the world state
+std::unique_ptr<World::CosmosType> World::instance = nullptr; // global instance of the world state
 std::recursive_mutex Player::transports_mutex;
 std::unordered_map<int, std::shared_ptr<Player>> Player::transports; // transport (slot -> Player) mapping
 
@@ -41,7 +41,7 @@ int main (int argc, char* argv[]) {
 
     {
         std::lock_guard<std::recursive_mutex> lock(World::world_mutex);
-        World::instance = std::make_shared<World::CosmosType>();
+        World::instance = std::make_unique<World::CosmosType>();
     }
 
     int exit_code = mudmux_run (World::instance.get()); // run the transport layer and event loop

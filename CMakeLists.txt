@@ -17,7 +17,7 @@ FetchContent_Declare(
 )
 FetchContent_MakeAvailable(argparse)
 
-find_package(OpenSSL REQUIRED COMPONENTS SSL Crypto)
+find_package(OpenSSL REQUIRED COMPONENTS SSL Crypto) # for BIO
 
 # generate configuration header
 include(GNUInstallDirs)
@@ -33,3 +33,10 @@ find_package(spdlog REQUIRED)
 find_package(yaml-cpp REQUIRED)
 
 add_subdirectory(src)
+
+# tests
+include(CTest)
+if(BUILD_TESTING)
+    enable_testing()
+    find_package(GTest REQUIRED)
+endif()

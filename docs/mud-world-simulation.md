@@ -17,7 +17,8 @@ The initial model has three core concepts:
 
 | Concept | Responsibility | Initial representation |
 | --- | --- | --- |
-| `World` | Owns the running world's shared state and its named zones. | A process-wide `std::shared_ptr<World>` instance. |
+| `World` | Defines the common world-simulation interface and shared state. | A polymorphic C++ base class. |
+| `World::CosmosType` | Selects the concrete world implementation for this driver. | A process-wide `std::unique_ptr<CosmosType>` instance. |
 | `Zone` | Represents an independently managed area of the world. | A polymorphic C++ base class. |
 | `Player` | Represents a connected player's session and current location. | A polymorphic C++ base class associated with a transport slot. |
 
@@ -52,39 +53,58 @@ extensions once their contracts are known.
 ## Object model
 
 ```text
-process-wide `World::instance`
-              |
-              v
-       +-------------+       zones_: name -> shared Zone
-       |    World    |----------------------------------+
-       +-------------+                                  |
-                                                    +---v---+
-                                                    | Zone  |
-                                                    +---^---+
-                                                        |
-                         current_zone_                  |
-       +-------------+----------------------------------+
-       |   Player    |
-       | slot, entry |
-       +------^------+
-              |
-   `Player::transports`: slot -> shared Player
-              |
-       mudmux connection
+`World::instance`: unique_ptr<CosmosType>
+                    |
+                    v
+             CosmosType -- derives from --> World
+                                            |
+                                            | zones_: name -> shared Zone
+                                            v
+                                           Zone
+                                            ^
+                                            | Player::current_zone_
+                                          Player
+                                            ^
+                                            | Player::transports: slot -> shared Player
+                                            |
+                                     mudmux connection
 ```
 
 ### `World`
 
-`World` is the root of the simulation. It owns the `zones_` map, which maps a
-stable zone name to a `std::shared_ptr<Zone>`. The running server creates the
-single `World::instance` before calling `mudmux_run()` and destroys it after
-the event loop returns. The same pointer is passed to `mudmux_run()` as the
-hook context.
+`World` is the polymorphic base class for world simulations. It defines the
+common world state, including the `zones_` map from stable zone names to
+`std::shared_ptr<Zone>` instances.
 
-`World::CosmosType` is an alias that lets a project replace the concrete world
-class without rewriting the application startup sequence. A specialized world
-can add zone loading, persistence, scheduling, global rules, or registries for
-other simulation objects.
+`World::CosmosType` identifies the concrete world type used by this driver. It
+defaults to `World`, but a project can set the alias to a class derived from
+`World`. `World::instance` is a `std::unique_ptr<CosmosType>`: the running
+server creates that sole owner before calling `mudmux_run()`. The pointer passed
+to `mudmux_run()` is a non-owning hook context, not a second owner.
+
+### World lifetime contract
+
+On a normal shutdown, the driver must preserve this ordering:
+
+1. `mudmux_run(World::instance.get())` returns only after the transport event
+   loop has stopped.
+2. While holding `World::world_mutex`, call `World::instance.reset()` to run
+   the concrete `CosmosType` destructor.
+3. Call `mudmux_deinit()` only after `World::instance.reset()` has completed.
+
+Using `std::unique_ptr<CosmosType>` makes this destruction point deterministic:
+no copied shared owner can keep the concrete world alive past `mudmux_deinit()`.
+This is important in a multithreaded driver, where a late world destructor
+could otherwise depend on transport-layer resources that have already been
+released.
+
+Hooks and worker tasks may use the non-owning context only while `mudmux_run()`
+is active. They must not store the context pointer, create another owner for
+the world, or access it after the event loop returns.
+
+A specialized `CosmosType` can add zone loading, persistence, scheduling,
+global rules, or registries for other simulation objects without rewriting the
+application startup sequence.
 
 The next API additions should make zone ownership explicit, for example with
 lookup and registration operations. Zone names should be stable identifiers,
@@ -137,19 +157,21 @@ its hooks. The intended lifecycle is:
 4. `HOOK_DISCONNECT` saves or detaches any required session state and removes
    the slot-to-player mapping. It must tolerate a connection that did not
    complete login.
-5. Server shutdown disconnects live slots before `World::instance` is reset,
-   allowing session cleanup to access the world while it still exists.
+5. Server shutdown disconnects live slots before `mudmux_run()` returns,
+   allowing session cleanup to access the world while it still exists. The
+   driver then resets `World::instance` before calling `mudmux_deinit()`.
 
-The current source implements player creation in step 1 and establishes the
-hook point for step 2, as well as the world startup/shutdown boundary. Login,
-command dispatch, persistence, and disconnect cleanup remain implementation
-work.
+The current source implements player creation in step 1, establishes the hook
+point for step 2, and enforces the world lifetime contract. Login, command
+dispatch, persistence, and disconnect cleanup remain implementation work.
 
 ## Ownership and concurrency
 
-`World::instance` and `Player::transports` are shared state. The current
-classes provide `World::world_mutex` and `Player::transports_mutex` to guard
-them, and each player has its own `mutex_` for player-local state.
+`World::instance` has a single owner of the concrete `CosmosType`, but the
+world it manages is shared state while the event loop is running.
+`Player::transports` is also shared state. The current classes provide
+`World::world_mutex` and `Player::transports_mutex` to guard them, and each
+player has its own `mutex_` for player-local state.
 
 `mudmux` can dispatch hooks through a worker pool, so world-simulation code
 must not assume that callbacks for different slots are serialized. The
