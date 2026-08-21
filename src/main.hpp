@@ -69,13 +69,15 @@ public:
     static bool disconnect(int slot, const std::shared_ptr<Player>& player);
 
 private:
-    mutable std::recursive_mutex mutex_; // mutex for player state
     int slot_; // transport slot associated with this player
     std::string entry_name_; // entry name associated with this player
     std::shared_ptr<Zone> current_zone_; // current zone the player is in
 
     static std::recursive_mutex transports_mutex_; // mutex for the transports mapping
     static std::unordered_map<int, std::shared_ptr<Player>> transports_; // transport (slot -> Player) mapping
+
+protected:
+    mutable std::recursive_mutex mutex_; // mutex for player state
 };
 
 // transport-layer callbacks for mudmux
