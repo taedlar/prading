@@ -36,6 +36,7 @@ find_package(spdlog REQUIRED)
 find_package(yaml-cpp REQUIRED)
 
 add_subdirectory(lib/sqlite3)
+add_subdirectory(lib/player-store)
 add_subdirectory(src)
 
 # tests
@@ -43,6 +44,7 @@ include(CTest)
 if(BUILD_TESTING)
     enable_testing()
     find_package(GTest REQUIRED)
+    add_subdirectory(tests)
 endif()
 
 # examples
