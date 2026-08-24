@@ -14,10 +14,23 @@
  * Zones are reference-counted using std::shared_ptr, allowing for safe sharing of zone instances across
  * different parts of the server. A zone can be added to the World instance and retrieved by name, or referenced
  * by players (including private zones not added to the World instance).
+ *
+ * A zone can implement policy functions to control certain logic layer decisions, such as whether a player is
+ * allowed to enter the zone. MUD systems can define their own policies with zone scope to make the logic layer
+ * more flexible and extensible. In a DikuMUD-genre system, an AREA is naturally a zone with all the rooms, objects,
+ * and mobs contained within it. In a LPMud-genre system, the driver does not have a concept of zones, but the mudlib
+ * usually implements zones or "domain areas" to organize the game world. Policies can also be used in content
+ * management decisions in LPMud-genre systems, to enforce certain security rules with wizard-level players.
  */
 class Zone: public std::enable_shared_from_this<Zone> {
 public:
     virtual ~Zone() = default;
+
+    // Define policy functions for zone-specific logic decisions. These functions can be overridden in derived
+    // classes or read settings from definition files to control the behavior of the zone.
+    // Examples:
+    // virtual bool policy_allows_player_entry(const std::shared_ptr<Player>& player) const = 0;
+    // virtual bool policy_allows_spawn_mob(const std::string& mob_type) const = 0;
 };
 
 /**
