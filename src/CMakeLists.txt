@@ -5,6 +5,7 @@ add_executable(prading main.cpp
     connection.cpp
     world.cpp
     player.cpp
+    zone.cpp
 )
 
 target_include_directories(prading PRIVATE
