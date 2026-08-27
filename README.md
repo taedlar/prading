@@ -94,6 +94,10 @@ When adding a submodule, use `modules/mudmux` as an example and:
 
 The following sections describe example submodules.
 
+### Engines
+
+A game engine is the core to drive the MUD system.
+
 ### User Persistence
 
 When a client connects to the MUD server, it commonly goes through login or character creation before entering the world.

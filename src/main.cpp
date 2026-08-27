@@ -15,17 +15,19 @@ static void process_command_line(int argc, char* argv[]);
 #include <signal.h>
 static void signal_handler(int signal) {
     SPDLOG_INFO("received signal {}, shutting down...", signal);
-    mudmux_shutdown();
+    mudmux_shutdown(); // to exit the mudmux_run() event loop
 }
 #endif
 
 int main (int argc, char* argv[]) {
+    int exit_code = EXIT_FAILURE; // default to failure unless everything succeeds
 #ifndef _WIN32
     // register signal handlers for graceful shutdown
     signal(SIGINT, signal_handler);
     signal(SIGTERM, signal_handler);
 #endif
 
+    // parse command-line arguments before initializing mudmux (transport layer) settings or exiting the program
     process_command_line(argc, argv);
 
     // register transport-layer callbacks for mudmux
@@ -33,13 +35,15 @@ int main (int argc, char* argv[]) {
     mudmux_register_hook (HOOK_TRANSPORT_READY, on_transport_ready);
     mudmux_register_hook (HOOK_DISCONNECT, on_disconnect);
 
-    World::initialize();
+    if (Engine::initialize() && World::initialize()) {
+        // run the asynchronous transport layer and event loop
+        exit_code = mudmux_run (World::get_instance());
+    }
 
-    int exit_code = mudmux_run (World::get_instance()); // run the transport layer and event loop
-
+    Engine::shutdown(); // destroy the engine instance
     World::shutdown(); // destroy the world state
 
-    mudmux_deinit();
+    mudmux_deinit(); // deinitialize the transport layer and cleanup resources
     return exit_code;
 }
 

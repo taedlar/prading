@@ -6,9 +6,36 @@
 #include <string>
 #include <unordered_map>
 
+class Engine;
 class Player;
 class Zone;
 class World;
+
+/**
+ * Engine class represents the core engine of the MUD server, responsible for managing the game state,
+ * processing events, and coordinating interactions between players and zones. It provides thread-safe
+ * access to the engine state using a recursive mutex. The Engine class can be extended or replaced
+ * with a different implementation if needed.
+ *
+ * The transport layer (mudmux) already provides an asynchronous event loop, so the Engine class does
+ * not need to implement its own event loop. Instead, it can focus on defining the boundary between
+ * the "engine" and the "world" that your MUD system is implementing. For a DikuMUD-genre system, the
+ * engine may be responsible to manage data (C structures) and logic (C functions) directly, while a
+ * LPMud-genre system may host a in-game virtual machine that provides a scripting environment for
+ * the mudlib to bridge the transport layer and the game world via hook functions.
+ */
+class Engine {
+public:
+    virtual ~Engine() = default;
+
+    static bool initialize();
+    static Engine* get_instance();
+    static void shutdown();
+
+private:
+    static std::recursive_mutex engine_mutex_; // mutex for global engine state
+    static std::unique_ptr<Engine> instance_; // polymorphic global instance of the engine
+};
 
 /**
  * Player class represents a connected player in the MUD server, including their transport slot,
@@ -64,8 +91,8 @@ class Zone: public std::enable_shared_from_this<Zone> {
 public:
     virtual ~Zone();
 
-    bool player_enter(const std::shared_ptr<Player>& player);
-    void player_leave(const std::shared_ptr<Player>& player);
+    virtual bool player_enter(const std::shared_ptr<Player>& player);
+    virtual void player_leave(const std::shared_ptr<Player>& player);
 
     // Define policy functions for zone-specific logic decisions. These functions can be overridden in derived
     // classes or read settings from definition files to control the behavior of the zone.
@@ -86,7 +113,7 @@ public:
 
     virtual ~World() = default;
 
-    static void initialize();
+    static bool initialize();
     static CosmosType* get_instance();
     static void shutdown();
 

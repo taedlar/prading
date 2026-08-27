@@ -4,11 +4,12 @@
 std::recursive_mutex World::world_mutex_;
 std::unique_ptr<World::CosmosType> World::instance_ = nullptr;
 
-void World::initialize() {
+bool World::initialize() {
     std::lock_guard<std::recursive_mutex> lock(world_mutex_);
     instance_ = std::make_unique<CosmosType>();
 
     // Populate initial zones or perform other setup tasks for the world instance if needed.
+    return true;
 }
 
 World::CosmosType* World::get_instance() {
