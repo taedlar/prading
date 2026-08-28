@@ -28,13 +28,9 @@ int main (int argc, char* argv[]) {
     signal(SIGTERM, signal_handler);
 #endif
 
-    // parse command-line arguments before initializing mudmux (transport layer) settings or exiting the program
+    // parse command-line arguments before initializing mudmux (transport layer) settings
+    // or exiting the program if the user requested help or version information.
     process_command_line(argc, argv);
-
-    // register transport-layer callbacks for mudmux
-    mudmux_register_hook (HOOK_CONNECT, on_connect);
-    mudmux_register_hook (HOOK_TRANSPORT_READY, on_transport_ready);
-    mudmux_register_hook (HOOK_DISCONNECT, on_disconnect);
 
     exit_code = run_server();
 
@@ -44,6 +40,14 @@ int main (int argc, char* argv[]) {
 
 int run_server() {
     Engine engine;
+
+    // TODO: initialize any in-game scripting engine or virtual machine here if needed
+
+    // register transport-layer callbacks for mudmux
+    mudmux_register_hook (HOOK_CONNECT, static_cast<mudmux_hook_func_t>(Engine::on_connect));
+    mudmux_register_hook (HOOK_TRANSPORT_READY, static_cast<mudmux_hook_func_t>(Engine::on_transport_ready));
+    mudmux_register_hook (HOOK_DISCONNECT, static_cast<mudmux_hook_func_t>(Engine::on_disconnect));
+
     World world(engine);
 
     // TODO: Initialize the world with zones, mobs, and other game entities here.
