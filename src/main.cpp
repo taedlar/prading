@@ -10,6 +10,7 @@
 #include <mudmux/hooks.h>
 
 static void process_command_line(int argc, char* argv[]);
+static int run_server();
 
 #ifndef _WIN32
 #include <signal.h>
@@ -35,16 +36,21 @@ int main (int argc, char* argv[]) {
     mudmux_register_hook (HOOK_TRANSPORT_READY, on_transport_ready);
     mudmux_register_hook (HOOK_DISCONNECT, on_disconnect);
 
-    if (Engine::initialize() && World::initialize()) {
-        // run the asynchronous transport layer and event loop
-        exit_code = mudmux_run (World::get_instance());
-    }
-
-    Engine::shutdown(); // destroy the engine instance
-    World::shutdown(); // destroy the world state
+    exit_code = run_server();
 
     mudmux_deinit(); // deinitialize the transport layer and cleanup resources
     return exit_code;
+}
+
+int run_server() {
+    Engine engine;
+    World world(engine);
+
+    // TODO: Initialize the world with zones, mobs, and other game entities here.
+
+    // The transport layer borrows the world as its hook context. Destruction
+    // occurs in reverse construction order: world first, then engine.
+    return mudmux_run(&world);
 }
 
 void process_command_line(int argc, char* argv[]) {

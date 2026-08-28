@@ -17,8 +17,7 @@ The initial model has three core concepts:
 
 | Concept | Responsibility | Initial representation |
 | --- | --- | --- |
-| `World` | Defines the common world-simulation interface and shared state. | A polymorphic C++ base class. |
-| `World::CosmosType` | Selects the concrete world implementation for this driver. | A process-wide `std::unique_ptr<CosmosType>` instance. |
+| `World` | Defines the common world-simulation interface and shared state. | A polymorphic C++ base class constructed with an `Engine&`. |
 | `Zone` | Represents an independently managed area of the world. | A polymorphic C++ base class. |
 | `Player` | Represents a connected player's session and current location. | A polymorphic C++ base class associated with a transport slot. |
 
@@ -53,10 +52,7 @@ extensions once their contracts are known.
 ## Object model
 
 ```text
-World lifecycle API --> unique_ptr<CosmosType>
-                          |
-                          v
-                   CosmosType -- derives from --> World
+Engine -- non-owning construction dependency --> World
                                                   |
                                                   | private zones_: name -> shared Zone
                                                   v
@@ -74,38 +70,35 @@ World lifecycle API --> unique_ptr<CosmosType>
 
 `World` is the polymorphic base class for world simulations. It defines the
 common world state, including the `zones_` map from stable zone names to
-`std::shared_ptr<Zone>` instances.
+`std::shared_ptr<Zone>` instances. Its constructor receives a non-owning
+`Engine&`, stored as a protected dependency for derived world implementations
+that need engine-owned services such as a scripting runtime.
 
-`World::CosmosType` identifies the concrete world type used by this driver. It
-defaults to `World`, but a project can set the alias to a class derived from
-`World`. The private `std::unique_ptr<CosmosType>` is managed through
-`World::initialize()`, `World::get_instance()`, and `World::shutdown()`: the
-running server creates that sole owner before calling `mudmux_run()`. The
-pointer passed to `mudmux_run()` is a non-owning hook context, not a second
-owner. Zones are accessed through `set_zone()`, `get_zone()`, and
-`remove_zone()`.
+The driver explicitly constructs the concrete world after its engine, then
+passes `&world` to `mudmux_run()` as a non-owning hook context. Zones are
+accessed through `set_zone()`, `get_zone()`, and `remove_zone()`.
 
 ### World lifetime contract
 
 On a normal shutdown, the driver must preserve this ordering:
 
-1. `mudmux_run(World::get_instance())` returns only after the transport event
-   loop has stopped.
-2. Call `World::shutdown()` to run the concrete `CosmosType` destructor.
-3. Call `mudmux_deinit()` only after `World::shutdown()` has completed.
+1. `mudmux_run(&world)` returns only after the transport event loop has
+   stopped.
+2. The scope containing `world` ends, running its concrete destructor while
+   the engine still exists.
+3. The engine's scope then ends, followed by `mudmux_deinit()`.
 
-Using `std::unique_ptr<CosmosType>` makes this destruction point deterministic:
-no copied shared owner can keep the concrete world alive past `mudmux_deinit()`.
-This is important in a multithreaded driver, where a late world destructor
-could otherwise depend on transport-layer resources that have already been
-released.
+Stack lifetime makes these destruction points explicit and deterministic. No
+copied owner can keep the concrete world alive past `mudmux_deinit()`. This is
+important in a multithreaded driver, where a late world destructor could
+otherwise depend on resources that have already been released.
 
 Hooks and worker tasks may use the non-owning context only while `mudmux_run()`
 is active. They must not store the context pointer, create another owner for
 the world, or access it after the event loop returns.
 
-A specialized `CosmosType` can add zone loading, persistence, scheduling,
-global rules, or registries for other simulation objects without rewriting the
+A specialized `World` can add zone loading, persistence, scheduling, global
+rules, or registries for other simulation objects without rewriting the
 application startup sequence.
 
 Zone names should be stable identifiers, not player-facing display names.
@@ -163,8 +156,8 @@ its hooks. The intended lifecycle is:
    the slot-to-player mapping. It must tolerate a connection that did not
    complete login.
 5. Server shutdown disconnects live slots before `mudmux_run()` returns,
-   allowing session cleanup to access the world while it still exists. The
-   driver then calls `World::shutdown()` before calling `mudmux_deinit()`.
+   allowing session cleanup to access the world while it still exists. Scope
+   exit then destroys the world before the engine and `mudmux_deinit()`.
 
 The current source implements player creation in step 1, establishes the hook
 point for step 2, and enforces the world lifetime contract. Login, command
@@ -172,17 +165,17 @@ dispatch, persistence, and disconnect cleanup remain implementation work.
 
 ## Ownership and concurrency
 
-The world instance has a single owner of the concrete `CosmosType`, but the
-world it manages is shared state while the event loop is running. The transport
-map is also shared state. Those members and their mutexes are private; callers
-use the thread-safe `World` and `Player` methods instead.
+The driver owns one active concrete world, but its state is shared while the
+event loop is running. The transport map is also shared state. Those members
+and their mutexes are private; callers use the thread-safe `World` and
+`Player` methods instead.
 
 `mudmux` can dispatch hooks through a worker pool, so world-simulation code
 must not assume that callbacks for different slots are serialized. The
 following locking discipline is proposed:
 
-1. Use `World`'s lifecycle and zone methods to read or mutate world-wide
-   state. `get_instance()` is valid only during the event-loop lifetime.
+1. Use `World`'s zone methods to read or mutate world-wide state. The hook
+   context is valid only during the event-loop lifetime.
 2. Use `Player::connect()`, `Player::find_by_slot()`, or
    `Player::disconnect()` for slot-to-player associations. Retain the returned
    `shared_ptr` after the call when a session must outlive its map entry, and

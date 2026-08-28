@@ -12,29 +12,22 @@ class Zone;
 class World;
 
 /**
- * Engine class represents the core engine of the MUD server, responsible for managing the game state,
- * processing events, and coordinating interactions between players and zones. It provides thread-safe
- * access to the engine state using a recursive mutex. The Engine class can be extended or replaced
- * with a different implementation if needed.
+ * Engine class represents driver-owned runtime services for the MUD server.
+ * A concrete engine may host an in-game virtual machine, a command dispatcher,
+ * schedulers, or other shared resources. The driver constructs it before the
+ * World, so those resources remain available during world construction and
+ * destruction. The Engine class can be extended or replaced as needed.
  *
- * The transport layer (mudmux) already provides an asynchronous event loop, so the Engine class does
- * not need to implement its own event loop. Instead, it can focus on defining the boundary between
- * the "engine" and the "world" that your MUD system is implementing. For a DikuMUD-genre system, the
- * engine may be responsible to manage data (C structures) and logic (C functions) directly, while a
- * LPMud-genre system may host a in-game virtual machine that provides a scripting environment for
- * the mudlib to bridge the transport layer and the game world via hook functions.
+ * The transport layer (mudmux) already provides an asynchronous event loop, so
+ * Engine does not implement one. It defines the boundary between the engine
+ * and the world: a DikuMUD-style implementation may manage compiled data and
+ * logic directly, while an LPMud-style implementation may host a virtual
+ * machine that lets a mudlib bridge transport hooks and the game world.
  */
 class Engine {
 public:
-    virtual ~Engine() = default;
-
-    static bool initialize();
-    static Engine* get_instance();
-    static void shutdown();
-
-private:
-    static std::recursive_mutex engine_mutex_; // mutex for global engine state
-    static std::unique_ptr<Engine> instance_; // polymorphic global instance of the engine
+    Engine();
+    virtual ~Engine();
 };
 
 /**
@@ -102,28 +95,25 @@ public:
 };
 
 /**
- * World class represents the global state of the MUD server, including zones
- * and other game-related data. It provides thread-safe access to the world state
- * using a recursive mutex. The World class can be extended or replaced with a different
- * implementation if needed.
+ * World class represents a MUD server's game state, including zones and other
+ * game-related data. It retains a non-owning reference to the Engine that
+ * constructed it, and protects its own shared state with a recursive mutex.
+ * The World class can be extended or replaced with a different implementation.
  */
 class World {
 public:
-    using CosmosType = World; // type alias for the cosmos type, can be changed to a different class if needed
-
+    explicit World(Engine& engine);
     virtual ~World() = default;
-
-    static bool initialize();
-    static CosmosType* get_instance();
-    static void shutdown();
 
     void set_zone(std::string name, std::shared_ptr<Zone> zone);
     std::shared_ptr<Zone> get_zone(const std::string& name) const;
     bool remove_zone(const std::string& name);
 
+protected:
+    Engine& engine_; // non-owning; the engine must outlive this world
+
 private:
-    static std::recursive_mutex world_mutex_; // mutex for global world state
-    static std::unique_ptr<CosmosType> instance_; // polymorphic global instance of the world state
+    mutable std::recursive_mutex mutex_; // mutex for this world's shared state
     std::unordered_map<std::string, std::shared_ptr<Zone>> zones_; // mapping of zone names to Zone objects
 };
 
