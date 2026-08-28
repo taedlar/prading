@@ -55,6 +55,8 @@ A MUD system consists of several essential parts:
 - **Logic layer** — Routes inbound data to command handlers and delivers outbound messages to connected users. It also defines or simulates the virtual world in which users interact. This layer has evolved through many architectures and design philosophies, including AberMUD, TinyMUD, LPMud, DikuMUD, MUSH, and MOO.
 - **Content layer** — Contains the player-facing parts of the MUD. It can support many styles and themes: hack-and-slash MUDs present text-based worlds where players fight monsters or one another; role-playing MUDs encourage players to inhabit their characters; and social MUDs focus primarily on social interaction.
 
+![DikuMUD-style and LPMud-style applications built on prading's three-layer model](docs/images/prading-three-layer-model.svg)
+
 This three-layer model describes a MUD system from a software developer's
 perspective. Here, a **component** is a functional part of the MUD—such as a
 transport implementation, a world simulation, or account persistence. It is
