@@ -1,0 +1,92 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="760" viewBox="0 0 1200 760" role="img" aria-labelledby="title desc">
+  <title id="title">Three-layers MUD model</title>
+  <desc id="desc">Side-by-side DikuMUD-style and LPMud-style MUD architectures. Each has content, logic, and transport layers, with the transport layer at the bottom.</desc>
+  <defs>
+    <style>
+      .title { font: 700 30px system-ui, -apple-system, BlinkMacSystemFont, &quot;Segoe UI&quot;, sans-serif; fill: #172b4d; }
+      .subtitle { font: 15px system-ui, -apple-system, BlinkMacSystemFont, &quot;Segoe UI&quot;, sans-serif; fill: #42526e; }
+      .column-title { font: 700 20px system-ui, -apple-system, BlinkMacSystemFont, &quot;Segoe UI&quot;, sans-serif; fill: #172b4d; }
+      .layer-title { font: 700 15px system-ui, -apple-system, BlinkMacSystemFont, &quot;Segoe UI&quot;, sans-serif; letter-spacing: .08em; }
+      .box-title { font: 600 16px system-ui, -apple-system, BlinkMacSystemFont, &quot;Segoe UI&quot;, sans-serif; fill: #172b4d; }
+      .box-copy { font: 13px system-ui, -apple-system, BlinkMacSystemFont, &quot;Segoe UI&quot;, sans-serif; fill: #42526e; }
+      .note { font: 13px system-ui, -apple-system, BlinkMacSystemFont, &quot;Segoe UI&quot;, sans-serif; fill: #52606d; }
+      .tag { font: 700 12px system-ui, -apple-system, BlinkMacSystemFont, &quot;Segoe UI&quot;, sans-serif; fill: #fff; letter-spacing: .04em; }
+    </style>
+  </defs>
+
+  <rect width="1200" height="760" rx="24" fill="#f7f9fc"/>
+  <text x="54" y="58" class="title">Three-layers Model</text>
+  <text x="54" y="86" class="subtitle">Different engine and content architectures share the same transport, logic, and content responsibilities.</text>
+
+  <!-- Column headings -->
+  <rect x="54" y="116" width="516" height="56" rx="14" fill="#e9f2ff" stroke="#4c9aff" stroke-width="2"/>
+  <text x="78" y="150" class="column-title">DikuMUD-style: compiled world</text>
+  <rect x="630" y="116" width="516" height="56" rx="14" fill="#f3e8ff" stroke="#998dd9" stroke-width="2"/>
+  <text x="654" y="150" class="column-title">LPMud-style: in-game programming</text>
+
+  <!-- Layer labels: left -->
+  <rect x="54" y="194" width="516" height="154" rx="16" fill="#fff7d6" stroke="#f5c451" stroke-width="2"/>
+  <rect x="54" y="194" width="126" height="34" rx="16" fill="#d99a00"/>
+  <text x="117" y="216" text-anchor="middle" class="tag">CONTENT</text>
+  <text x="202" y="216" class="layer-title" fill="#805d00">Player-facing definitions</text>
+  <rect x="76" y="246" width="218" height="76" rx="10" fill="#fff" stroke="#f5c451"/>
+  <text x="94" y="274" class="box-title">Area definition files</text>
+  <text x="94" y="297" class="box-copy">rooms · exits · zones</text>
+  <rect x="318" y="246" width="228" height="76" rx="10" fill="#fff" stroke="#f5c451"/>
+  <text x="336" y="274" class="box-title">Game content</text>
+  <text x="336" y="297" class="box-copy">mobs · items · quests</text>
+
+  <rect x="54" y="366" width="516" height="196" rx="16" fill="#e3fcef" stroke="#36b37e" stroke-width="2"/>
+  <rect x="54" y="366" width="110" height="34" rx="16" fill="#00875a"/>
+  <text x="109" y="388" text-anchor="middle" class="tag">LOGIC</text>
+  <text x="186" y="388" class="layer-title" fill="#006644">Compiled game rules</text>
+  <rect x="76" y="418" width="218" height="112" rx="10" fill="#fff" stroke="#36b37e"/>
+  <text x="94" y="447" class="box-title">Engine</text>
+  <text x="94" y="470" class="box-copy">startup · dispatch · schedulers</text>
+  <text x="94" y="492" class="box-copy">C/C++ command tables</text>
+  <rect x="318" y="418" width="228" height="112" rx="10" fill="#fff" stroke="#36b37e"/>
+  <text x="336" y="447" class="box-title">World simulation</text>
+  <text x="336" y="470" class="box-copy">World · Zone · Player</text>
+  <text x="336" y="492" class="box-copy">compiled policies and state</text>
+
+  <rect x="54" y="580" width="516" height="124" rx="16" fill="#deebff" stroke="#2684ff" stroke-width="2"/>
+  <rect x="54" y="580" width="142" height="34" rx="16" fill="#0052cc"/>
+  <text x="125" y="602" text-anchor="middle" class="tag">TRANSPORT</text>
+  <text x="218" y="602" class="layer-title" fill="#0047b3">Connections and protocols</text>
+  <rect x="76" y="632" width="470" height="48" rx="10" fill="#fff" stroke="#2684ff"/>
+  <text x="311" y="661" text-anchor="middle" class="box-title">mudmux — async I/O · TLS · Telnet · WebSocket · hooks</text>
+
+  <!-- Layer labels: right -->
+  <rect x="630" y="194" width="516" height="154" rx="16" fill="#fff7d6" stroke="#f5c451" stroke-width="2"/>
+  <rect x="630" y="194" width="126" height="34" rx="16" fill="#d99a00"/>
+  <text x="693" y="216" text-anchor="middle" class="tag">CONTENT</text>
+  <text x="778" y="216" class="layer-title" fill="#805d00">Script-defined world</text>
+  <rect x="652" y="246" width="218" height="76" rx="10" fill="#fff" stroke="#f5c451"/>
+  <text x="670" y="274" class="box-title">Mudlib objects</text>
+  <text x="670" y="297" class="box-copy">rooms · NPCs · items</text>
+  <rect x="894" y="246" width="228" height="76" rx="10" fill="#fff" stroke="#f5c451"/>
+  <text x="912" y="274" class="box-title">In-game subsystems</text>
+  <text x="912" y="297" class="box-copy">commands · quests · dialogue</text>
+
+  <rect x="630" y="366" width="516" height="196" rx="16" fill="#e3fcef" stroke="#36b37e" stroke-width="2"/>
+  <rect x="630" y="366" width="110" height="34" rx="16" fill="#00875a"/>
+  <text x="685" y="388" text-anchor="middle" class="tag">LOGIC</text>
+  <text x="762" y="388" class="layer-title" fill="#006644">Runtime and script bridge</text>
+  <rect x="652" y="418" width="218" height="112" rx="10" fill="#fff" stroke="#36b37e"/>
+  <text x="670" y="447" class="box-title">Engine</text>
+  <text x="670" y="470" class="box-copy">interpreter · VM · lifecycle</text>
+  <text x="670" y="492" class="box-copy">host APIs and registries</text>
+  <rect x="894" y="418" width="228" height="112" rx="10" fill="#fff" stroke="#36b37e"/>
+  <text x="912" y="447" class="box-title">Hook adapters</text>
+  <text x="912" y="470" class="box-copy">transport events → mudlib</text>
+  <text x="912" y="492" class="box-copy">script calls → APIs / policy</text>
+
+  <rect x="630" y="580" width="516" height="124" rx="16" fill="#deebff" stroke="#2684ff" stroke-width="2"/>
+  <rect x="630" y="580" width="142" height="34" rx="16" fill="#0052cc"/>
+  <text x="701" y="602" text-anchor="middle" class="tag">TRANSPORT</text>
+  <text x="794" y="602" class="layer-title" fill="#0047b3">Connections and protocols</text>
+  <rect x="652" y="632" width="470" height="48" rx="10" fill="#fff" stroke="#2684ff"/>
+  <text x="887" y="661" text-anchor="middle" class="box-title">mudmux — async I/O · TLS · Telnet · WebSocket · hooks</text>
+
+  <text x="600" y="733" text-anchor="middle" class="note">prading keeps the driver small: choose or build the engine, world model, and content architecture that fit your MUD.</text>
+</svg>
