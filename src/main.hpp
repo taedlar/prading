@@ -28,6 +28,11 @@ class Engine {
 public:
     Engine();
     virtual ~Engine();
+
+    // transport-layer callbacks for mudmux
+    static int on_connect(void* ctx, int slot, void* data, size_t data_len);
+    static int on_transport_ready(void* ctx, int slot, void* data, size_t data_len);
+    static int on_disconnect(void* ctx, int slot, void* data, size_t data_len);
 };
 
 /**
@@ -116,10 +121,5 @@ private:
     mutable std::recursive_mutex mutex_; // mutex for this world's shared state
     std::unordered_map<std::string, std::shared_ptr<Zone>> zones_; // mapping of zone names to Zone objects
 };
-
-// transport-layer callbacks for mudmux
-extern "C" int on_connect (void* ctx, int slot, void* data, size_t data_len);
-extern "C" int on_transport_ready (void* ctx, int slot, void* data, size_t data_len);
-extern "C" int on_disconnect (void* ctx, int slot, void* data, size_t data_len);
 
 #endif // MAIN_HPP
