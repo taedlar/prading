@@ -79,6 +79,19 @@ A MUD with *in-game programming* capabilities, such as LPMud, may wire transport
 
 The logic layer determines how hook functions connect component implementations.
 
+## Engine
+
+The **engine** is the driver-owned runtime that connects transport hooks to a
+MUD's logic and world. Its boundary with the world is an architectural choice:
+a DikuMUD-style server commonly implements game rules directly in compiled
+code, while an LPMud-style server hosts an in-game runtime that lets a *mudlib*
+define much of the world. Hybrid designs are common.
+
+`prading` provides `Engine` as the small, process-wide owner for such runtime
+services, alongside the [`World`/`Zone`/`Player` world model](docs/mud-world-simulation.md).
+See [MUD Engine](docs/mud-engine.md) for its lifecycle, integration boundary,
+and extension guidance.
+
 ## Submodules
 
 Use a Git submodule for a component implementation only when it is intended to
@@ -121,7 +134,15 @@ reusable submodule in another.
 `prading` proposes a minimum viable [**world-simulation architecture**](docs/mud-world-simulation.md) built around three C++ classes: `World`, `Zone`, and `Player`.
 
 > [!NOTE]
-> This simulation model is independent of the choice to use, or not use, an in-game programming architecture such as LPMud.
+>
+> The world-simulation model is independent of the choice to use an
+> in-game-programming architecture such as LPMud or DikuMUD. Its classes
+> represent three essential software entities in a MUD system:
+> - `World` is the **global game state and in-game entities** container
+> - `Zone` is a **policy or spatial-segmentation** context
+> - `Player` is an external **source or destination for messages**
+>
+> These classes can be used in DikuMUD-style, LPMud-style, or hybrid engines.
 
 ### Content Management
 

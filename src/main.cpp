@@ -10,22 +10,25 @@
 #include <mudmux/hooks.h>
 
 static void process_command_line(int argc, char* argv[]);
+static int run_server();
 
 #ifndef _WIN32
 #include <signal.h>
 static void signal_handler(int signal) {
     SPDLOG_INFO("received signal {}, shutting down...", signal);
-    mudmux_shutdown();
+    mudmux_shutdown(); // to exit the mudmux_run() event loop
 }
 #endif
 
 int main (int argc, char* argv[]) {
+    int exit_code = EXIT_FAILURE; // default to failure unless everything succeeds
 #ifndef _WIN32
     // register signal handlers for graceful shutdown
     signal(SIGINT, signal_handler);
     signal(SIGTERM, signal_handler);
 #endif
 
+    // parse command-line arguments before initializing mudmux (transport layer) settings or exiting the program
     process_command_line(argc, argv);
 
     // register transport-layer callbacks for mudmux
@@ -33,14 +36,21 @@ int main (int argc, char* argv[]) {
     mudmux_register_hook (HOOK_TRANSPORT_READY, on_transport_ready);
     mudmux_register_hook (HOOK_DISCONNECT, on_disconnect);
 
-    World::initialize();
+    exit_code = run_server();
 
-    int exit_code = mudmux_run (World::get_instance()); // run the transport layer and event loop
-
-    World::shutdown(); // destroy the world state
-
-    mudmux_deinit();
+    mudmux_deinit(); // deinitialize the transport layer and cleanup resources
     return exit_code;
+}
+
+int run_server() {
+    Engine engine;
+    World world(engine);
+
+    // TODO: Initialize the world with zones, mobs, and other game entities here.
+
+    // The transport layer borrows the world as its hook context. Destruction
+    // occurs in reverse construction order: world first, then engine.
+    return mudmux_run(&world);
 }
 
 void process_command_line(int argc, char* argv[]) {
