@@ -45,3 +45,8 @@ project-owned code, or project-owned conventions to a submodule.
 - Add libraries from `/lib` after submodules, then add `/src` and `/tests`.
   Link CMake targets by their exported target names rather than by raw include
   or library paths.
+- For project-wide configuration settings and `spdlog` header, always add
+  `target_include_directories(<target> PRIVATE ${CMAKE_BINARY_DIR})` to the
+  CMakeList.txt and add `#include "config.h"` at begining of C/C++ implementation
+  files. Also add `target_link_libraries(<target>, PRIVATE spdlog::spdlog)` to
+  link with the spdlog library.

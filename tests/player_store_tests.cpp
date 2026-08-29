@@ -1,3 +1,4 @@
+#include "config.h"
 #include "player_store/player_store.hpp"
 
 #include <gtest/gtest.h>
