@@ -7,8 +7,11 @@ project(prading
     DESCRIPTION "An experimental MUD system that develop and extend itself with LLM."
     LANGUAGES C CXX
 )
-option(BUILD_TESTING "Enable testing" ON)
-option(BUILD_EXAMPLES "Enable building of examples" ON)
+
+include(CTest)
+include(CMakeDependentOption)
+cmake_dependent_option(BUILD_TESTING "Enable testing" ON "prading_IS_TOP_LEVEL" OFF)
+cmake_dependent_option(BUILD_EXAMPLES "Enable building of examples" ON "prading_IS_TOP_LEVEL" OFF)
 
 # dependencies
 include(FetchContent)
@@ -24,9 +27,15 @@ FetchContent_Declare(
     GIT_TAG 0.31.2
     OVERRIDE_FIND_PACKAGE
 )
+set(BUILD_TESTING OFF)
+set(BUILD_SHARED_LIBS OFF)
 FetchContent_MakeAvailable(argparse cmark)
+unset(BUILD_TESTING)
+unset(BUILD_SHARED_LIBS)
 
 find_package(OpenSSL REQUIRED COMPONENTS SSL Crypto) # for BIO
+
+# build options
 
 # generate configuration header
 include(GNUInstallDirs)
@@ -36,7 +45,6 @@ configure_file(
 )
 
 # components
-set(MUDMUX_BUILD_EXAMPLES OFF CACHE BOOL "Disable building of mudmux examples" FORCE)
 add_subdirectory(modules/mudmux) # also fetches spdlog, yaml-cpp
 find_package(spdlog REQUIRED)
 find_package(yaml-cpp REQUIRED)
@@ -46,7 +54,6 @@ add_subdirectory(lib/player-store)
 add_subdirectory(src)
 
 # tests
-include(CTest)
 if(BUILD_TESTING)
     enable_testing()
     find_package(GTest REQUIRED)

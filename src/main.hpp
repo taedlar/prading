@@ -29,10 +29,18 @@ public:
     Engine();
     virtual ~Engine();
 
-    // transport-layer callbacks for mudmux
+    // ---------------------------------------------------------
+    // transport-layer callbacks for mudmux (see mudmux/hooks.h)
+    // ---------------------------------------------------------
     static int on_connect(void* ctx, int slot, void* data, size_t data_len);
-    static int on_transport_ready(void* ctx, int slot, void* data, size_t data_len);
     static int on_disconnect(void* ctx, int slot, void* data, size_t data_len);
+    // static int on_message_inbound(void* ctx, int slot, void* data, size_t data_len);
+    // static int on_message_outbound(void* ctx, int slot, void* data, size_t data_len);
+    static int on_transport_ready(void* ctx, int slot, void* data, size_t data_len);
+    // static int on_prompt(void* ctx, int slot, void* data, size_t data_len);
+    // static int on_telnet_subneg(void* ctx, int slot, void* data, size_t data_len);
+    // static int on_timer(void* ctx, int slot, void* data, size_t data_len);
+    // static int on_garbage_collection(void* ctx, int slot, void* data, size_t data_len);
 };
 
 /**
