@@ -18,7 +18,13 @@ FetchContent_Declare(
     GIT_TAG v3.2
     OVERRIDE_FIND_PACKAGE
 )
-FetchContent_MakeAvailable(argparse)
+FetchContent_Declare(
+    cmark
+    GIT_REPOSITORY https://github.com/commonmark/cmark.git
+    GIT_TAG 0.31.2
+    OVERRIDE_FIND_PACKAGE
+)
+FetchContent_MakeAvailable(argparse cmark)
 
 find_package(OpenSSL REQUIRED COMPONENTS SSL Crypto) # for BIO
 
